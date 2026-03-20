@@ -1,5 +1,5 @@
 
-TARGET_URL = "https://kuper.ru/categories/katalog-apteka/produkti-pitaniya" 
+TARGET_URL = "https://kuper.ru/tapchan-keitering/tiramisu-a06a2e9" 
 
 CONFIDENCE_THRESHOLD = 0.97
 
