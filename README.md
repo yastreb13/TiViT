@@ -14,6 +14,6 @@ https://youtu.be/2VRvyMANiXk
 
 **TiViT (Tiramisu Vision Transformer)** — это пет-проект на базе архитектуры Vision Transformer (ViT), который в реальном времени следит за моим лицом через веб-камеру.
 
-- **PyTorch**: Fine-Tuning предобученной модели ViT-B/16  
+- **PyTorch**: Fine-Tuning модели ViT-B/16  
 - **OpenCV**: Захват видеопотока с веб-камеры и детекция лица  
 - **Python (webbrowser)**: Автооткрытие сайта-доставки
