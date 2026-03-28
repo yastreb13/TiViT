@@ -4,12 +4,26 @@ import torch.nn.functional as F
 import webbrowser
 import time
 
+import numpy as np
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image
+
 import config
 from model import load_tivit_model, transform_frame
+
+#подгонка под gradcam
+def reshape_transform(tensor, height=14, width=14):
+    result = tensor[:, 1:, :]
+    result = result.reshape(tensor.size(0), height, width, tensor.size(2))
+    result = result.transpose(2, 3).transpose(1, 2)
+    return result
 
 def main():
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model=load_tivit_model(config.WEIGHTS_PATH, device)
+    
+    target_layers=[model.encoder.layers[-1].ln_1]
+    cam=GradCAM(model=model, target_layers=target_layers, reshape_transform=reshape_transform)
     
     cap = cv2.VideoCapture(0)
     #детектор лиц
@@ -30,13 +44,23 @@ def main():
         # Если лицо найдено
         if len(faces)>0:
             x, y, w, h = faces[0]
-            face_roi = frame[y:y+h, x:x+w]
+            face_roi=frame[y:y+h, x:x+w]
             face_resized=cv2.resize(face_roi, (224,224))
             
             # rgb и трансформация
             rgb_face=cv2.cvtColor(face_resized, cv2.COLOR_BGR2RGB)
             input_tensor=transform_frame(rgb_face)
             input_batch=input_tensor.unsqueeze(0).to(device)
+            
+            # маска внимания
+            grayscale_cam=cam(input_tensor=input_batch, targets=None)[0, :]
+            face_float=rgb_face.astype(np.float32)/255.0
+            #лицо + heatmap
+            cam_image=show_cam_on_image(face_float, grayscale_cam, use_rgb=True)
+            #2bgr
+            cam_image_bgr=cv2.cvtColor(cam_image, cv2.COLOR_RGB2BGR)
+            cam_image_resized=cv2.resize(cam_image_bgr, (w, h))
+            frame[y:y+h, x:x+w]=cam_image_resized
             
             with torch.no_grad():
                 output = model(input_batch)
